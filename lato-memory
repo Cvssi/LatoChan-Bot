@@ -1,0 +1,4 @@
+#!/bin/bash
+# LatoChan's per-person notes. Changes apply to her next message, no restart needed.
+#   lato-memory list [name|id] | add <id> <name> <note> | del <note_id> | wipe <user_id> | export | import < file
+exec /opt/latochan/current/venv/bin/python /opt/latochan/current/memory.py "$@"

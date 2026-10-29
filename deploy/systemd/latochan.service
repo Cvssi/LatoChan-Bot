@@ -1,0 +1,17 @@
+[Unit]
+Description=LatoChan local gateway
+After=network-online.target ollama.service
+Wants=network-online.target ollama.service
+
+[Service]
+User=latochan
+UMask=0007
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=/etc/latochan.env
+WorkingDirectory=/opt/latochan/current
+ExecStart=/opt/latochan/current/venv/bin/python gateway.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

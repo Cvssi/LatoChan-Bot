@@ -1,0 +1,12 @@
+#!/bin/bash
+# Live view of what LatoChan sees and decides. Ctrl+C to quit.
+#   IN  = the message as she receives it   RAW = her full output incl. hidden tags   then what was done
+C_IN=$'\e[36m'; C_RAW=$'\e[35m'; C_OK=$'\e[32m'; C_WARN=$'\e[33m'; C_X=$'\e[0m'; C_TH=$'\e[94m'
+echo "watching latochan... (ctrl+c to quit)"
+journalctl -u latochan -f -n 20 -o cat 2>/dev/null | sed -u -E \
+  -e "s/^[0-9-]+ ([0-9:]+),[0-9]+ INFO IN  /\1 ${C_IN}IN  /" \
+  -e "s/^[0-9-]+ ([0-9:]+),[0-9]+ INFO THINK/\1 ${C_TH}THINK/" \
+  -e "s/^[0-9-]+ ([0-9:]+),[0-9]+ INFO RAW /\1 ${C_RAW}RAW /" \
+  -e "s/^[0-9-]+ ([0-9:]+),[0-9]+ INFO (replied|stayed quiet)/\1 ${C_OK}\2/" \
+  -e "s/^[0-9-]+ ([0-9:]+),[0-9]+ WARNING /\1 ${C_WARN}WARN /" \
+  -e "s/$/${C_X}/"

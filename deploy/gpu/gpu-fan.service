@@ -1,0 +1,11 @@
+[Unit]
+Description=Vega 56 fan curve on hotspot temperature
+After=gpu-tune.service
+
+[Service]
+ExecStart=/usr/local/sbin/gpu-fan
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

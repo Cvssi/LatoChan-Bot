@@ -1,0 +1,13 @@
+[Unit]
+Description=Vega 56 gentle undervolt, power limit, ASPM off
+After=systemd-udev-settle.service systemd-modules-load.service
+Before=ollama.service gpu-fan.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sh -c "for i in $(seq 30); do ls /sys/bus/pci/devices/0000:05:00.0/pp_od_clk_voltage >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1"
+ExecStart=/usr/local/sbin/gpu-tune
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+#!/bin/bash
+# Fan curve on GPU hotspot (junction). Hands control back to the card on any exit.
+D=/sys/bus/pci/devices/0000:05:00.0; H=$(ls -d $D/hwmon/hwmon*)
+restore() { echo 2 > "$H/pwm1_enable"; }
+trap restore EXIT
+trap 'exit 0' TERM INT
+echo 1 > $H/pwm1_enable
+cur=0
+while true; do
+  t=$(( $(cat $H/temp2_input 2>/dev/null || echo 999000) / 1000 ))
+  # junction C -> fan %:  <=55:22  65:35  75:55  85:75  92:90  >=97:100
+  if   [ $t -ge 97 ]; then p=100
+  elif [ $t -ge 92 ]; then p=$((90 + (t-92)*2))
+  elif [ $t -ge 85 ]; then p=$((75 + (t-85)*15/7))
+  elif [ $t -ge 75 ]; then p=$((55 + (t-75)*2))
+  elif [ $t -ge 65 ]; then p=$((35 + (t-65)*2))
+  elif [ $t -ge 55 ]; then p=$((22 + (t-55)*13/10))
+  else p=22; fi
+  # ramp up immediately, ramp down slowly (max 3% per 2s) so it does not pulse
+  if [ $p -lt $cur ]; then p=$(( cur-3 > p ? cur-3 : p )); fi
+  cur=$p
+  echo $(( p*255/100 )) > $H/pwm1
+  sleep 2
+done
