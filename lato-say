@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""Post as LatoChan: lato-say [--stdin] [-c CHANNEL] [text]. Run with sudo."""
+import argparse
+import json
+import sys
+import urllib.request
+
+sys.path.insert(0, '/opt/latochan/current')
+from envconfig import load_ids
+
+env = load_ids()
+import latoids
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--stdin', action='store_true', help='read message from stdin, keeping text out of process arguments')
+parser.add_argument('-c', '--channel', default=latoids.MAIN_CHANNEL)
+parser.add_argument('text', nargs='*')
+args = parser.parse_args()
+if args.stdin and args.text:
+    parser.error('Use either --stdin or positional message text')
+text = sys.stdin.read(2001) if args.stdin else ' '.join(args.text)
+if not text.strip() or len(text) > 2000:
+    parser.error('Message must contain 1 to 2000 characters')
+if not args.channel.isdigit() or not 0 < int(args.channel) <= 2**63 - 1:
+    parser.error('Channel must be a positive numeric Discord ID')
+body = {'content': text, 'allowed_mentions': {'parse': [], 'users': [latoids.OWNER_ID]}}
+request = urllib.request.Request(f'https://discord.com/api/v10/channels/{args.channel}/messages', json.dumps(body).encode(),
+                                 {'Authorization': f"Bot {env['DISCORD_BOT_TOKEN']}", 'Content-Type': 'application/json',
+                                  'User-Agent': 'DiscordBot (latochan, 1.1)'}, method='POST')
+with urllib.request.urlopen(request, timeout=20) as response:
+    print('sent', json.load(response)['id'])

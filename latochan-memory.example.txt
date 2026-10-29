@@ -1,0 +1,13 @@
+#initial-import
+# Only accepted when the database is empty. For edits use lato-memory export first.
+# LatoChan memory (example). Copy to latochan-memory.txt, edit, then import with: lato-memory import < latochan-memory.txt
+# One note per line under each person. Delete a line to make her forget it.
+# New person: add a heading like  [dan 123456789012345678]  (name + their Discord user ID).
+# Keep notes short (max 140 characters). Lines starting with # are ignored.
+
+[alice 111111111111111111]
+likes tea
+has a dog called biscuit
+
+[bob 222222222222222222]
+plays chess

@@ -1,0 +1,21 @@
+#!/bin/bash
+# Reboots the server if the GPU falls off the bus (it cannot recover without a reboot).
+# Guard: at most 3 watchdog reboots per 60 minutes, so a dead card cannot cause a reboot loop.
+STATE=/var/lib/gpu-watchdog; mkdir -p $STATE
+journalctl -k -f -n 0 -o cat | while read -r line; do
+  case "$line" in
+    *"GPU Recovery Failed"*|*"device lost from bus"*|*"Ring comp"*"reset failed"*)
+      now=$(date +%s)
+      recent=$(awk -v n=$now "n-\$1<3600" $STATE/reboots 2>/dev/null | wc -l)
+      logger -t gpu-watchdog "GPU lost: $line (recent watchdog reboots: $recent)"
+      if [ "$recent" -ge 3 ]; then
+        logger -t gpu-watchdog "Not rebooting: 3 reboots in the last hour. Stopping ollama instead."
+        systemctl stop latochan ollama; continue
+      fi
+      echo $now >> $STATE/reboots
+      sleep 5; sync
+      ( sleep 90; echo s > /proc/sysrq-trigger; sleep 3; echo b > /proc/sysrq-trigger ) &
+      systemctl reboot
+      ;;
+  esac
+done

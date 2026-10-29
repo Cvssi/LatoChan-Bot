@@ -1,0 +1,7 @@
+discord.py>=2.4
+aiohttp>=3.14.3
+numpy>=1.26
+requests>=2.32.4
+pillow>=13.0.0      # images/gifs
+PyNaCl>=1.5       # voice
+davey>=0.1        # voice (Discord DAVE encryption)

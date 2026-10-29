@@ -1,0 +1,4 @@
+#!/bin/bash
+# LatoChan gif library (used by LatoDash).   lato-gifs json | lato-gifs apply  (JSON on stdin)
+# Links live in /var/lib/latochan/gifs/<mood>/links.txt; the logic is in /opt/latochan/current/gifstore.py.
+exec /opt/latochan/current/venv/bin/python /opt/latochan/current/gifstore.py "$@"

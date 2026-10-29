@@ -1,0 +1,2 @@
+# sleepy gifs for LatoChan: one link per line (tenor / klipy / giphy page or .gif links).
+# Lines starting with # are ignored. Upload with the dashboard GIFs tab, or copy to /var/lib/latochan/gifs/.

@@ -1,0 +1,14 @@
+#!/bin/bash
+# LatoChan settings. Changes apply to her next message, no restart needed.
+#   lato-config                         show every setting
+#   lato-config thinking on|off|toggle
+#   lato-config set KEY VALUE           any setting, e.g.  set gif_chance 40   /   set swearing off
+#   lato-config reset [KEY ...]         back to defaults
+#   lato-config json | apply            machine-readable forms for a dashboard (apply reads a JSON object on stdin)
+# The list of settings and their limits lives in /opt/latochan/current/botsettings.py.
+case "$1" in
+  thinking)        set -- set "$1" "${2:-toggle}" ;;
+  ""|show)         set -- show ;;
+  -h|--help|help)  sed -n '2,8p' "$0"; exit 0 ;;
+esac
+exec /opt/latochan/current/venv/bin/python /opt/latochan/current/botsettings.py "$@"
