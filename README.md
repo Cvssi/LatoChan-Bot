@@ -4,17 +4,18 @@ A self-hosted Discord companion bot powered by a **local LLM** ([Ollama](https:/
 
 **Features**
 - Chats in your Discord server using a compatible Ollama model (vision is detected before images are processed)
-- Fully editable personality (`persona.md`), re-read on every message
+- Fully editable personality (`persona.md`), re-read on every message (recommend basing it off an existing character) 
 - Per-person notes it saves and recalls (SQLite)
 - Reaction GIFs by mood, emoji reactions, optional voice/moderation actions for the owner only
 - Sleep/wake cycle, burst handling (waits until you finish typing), quiet hours
 - About 30 live settings (`lato-config`), no restart needed
 - Runs as a sandboxed systemd service
+- Optional GPU tuning (I ran this on a 8GB Vega 56) 
 
 An optional web dashboard lives in a separate repository: **LatoDash**.
 
 ## Requirements
-- A Linux server with systemd (tested on Ubuntu) and enough RAM/VRAM for your model
+- A Linux server with systemd (tested on Ubuntu) and enough RAM/VRAM (Minimum 6GB) for your model
 - CPython 3.14, `curl`, venv/pip, and preinstalled Ollama; see `deploy/OPERATIONS.md`
 - A Discord bot token with **Message Content Intent** and **Server Members Intent** enabled
 
