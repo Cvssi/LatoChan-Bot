@@ -36,7 +36,7 @@ Thumbs.db
 
 # private review and release staging
 REMEDIATION.md
-*review-evidence*
+/review-evidence*/
 *.tar.gz
 *.zip
 backups/
