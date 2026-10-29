@@ -10,12 +10,12 @@ A self-hosted Discord companion bot powered by a **local LLM** ([Ollama](https:/
 - Sleep/wake cycle, burst handling (waits until you finish typing), quiet hours
 - About 30 live settings (`lato-config`), no restart needed
 - Runs as a sandboxed systemd service
-- Optional GPU tuning (I ran this on a 8GB Vega 56) 
+- Optional hardware-specific AMD GPU tuning; see [GPU tuning notes](deploy/gpu/README.md).
 
 An optional web dashboard lives in a separate repository: **LatoDash**.
 
 ## Requirements
-- A Linux server with systemd (tested on Ubuntu) and enough RAM/VRAM (Minimum 6GB) for your model
+- A Linux server with systemd (tested on Ubuntu). RAM/VRAM requirements depend on your model, quantization, context size and inference backend.
 - CPython 3.14, `curl`, venv/pip, and preinstalled Ollama; see `deploy/OPERATIONS.md`
 - A Discord bot token with **Message Content Intent** and **Server Members Intent** enabled
 
@@ -98,7 +98,7 @@ deploy/           systemd units, env template, Modelfile example, optional AMD G
 Chat history is bounded by entries and a conservative context budget. A small command-attempt ledger is persisted without command contents. Notes/retrieval require approved private channels and are disabled by default. `setup.sh` is written for Ubuntu/Debian; expect small tweaks elsewhere. AMD/Vulkan GPU tuning examples are in `deploy/gpu/` (hardware specific, optional).
 
 ## License
-No license file is included yet; add one before publishing if you want others to reuse the code.
+Licensed under the [MIT License](LICENSE). Dependencies and separately downloaded models retain their own licenses.
 
 ## Explicit owner commands
 
