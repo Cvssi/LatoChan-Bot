@@ -1,0 +1,3 @@
+#!/bin/bash
+# LatoChan's long-term memory (recall.db). See: lato-recall help
+cd /opt/latochan/current && exec sudo -u latochan env $(sudo cat /etc/latochan.env 2>/dev/null | grep -E '^(CHANNEL_IDS|OWNER_ID|GUILD_ID|EMBED_URL|EMBED_MODEL)=' | xargs) /opt/latochan/current/venv/bin/python -m modules.recall.cli "$@"

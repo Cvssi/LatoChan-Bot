@@ -1,0 +1,36 @@
+[Unit]
+Description=LatoChan voice worker (speech-to-text + her voice), loopback only
+After=network-online.target
+
+[Service]
+User=latovoice
+Group=latovoice
+EnvironmentFile=/etc/latovoice.env
+Environment=HF_HUB_OFFLINE=1
+Environment=VOICE_DIR=/var/lib/latovoice/voices
+Environment=WHISPER_DIR=/var/lib/latovoice/whisper
+WorkingDirectory=/opt/latovoice
+ExecStart=/opt/latovoice/venv/bin/python server.py
+Restart=always
+RestartSec=5
+Nice=5
+MemoryMax=3G
+# sandbox: no network except loopback, read-only system, models dir read-only too
+IPAddressAllow=localhost
+IPAddressDeny=any
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+ReadOnlyPaths=/var/lib/latovoice
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

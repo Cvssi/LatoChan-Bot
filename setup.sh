@@ -37,8 +37,13 @@ exec 9>"$APP_DIR/.install.lock"
 flock -n 9 || { echo 'Another installation is in progress'; exit 1; }
 release="$APP_DIR/releases/$(date -u +%Y%m%dT%H%M%S)-$$"
 install -d -o root -g root -m 755 "$release"
-app_files=(gateway.py botsettings.py gifstore.py latoids.py memory.py rag.py commands.py storage.py workload.py media_worker.py actionlog.py envconfig.py requirements.txt requirements.lock)
+app_files=(gateway.py botsettings.py gifstore.py latoids.py memory.py rag.py friends.py storage.py workload.py media_worker.py actionlog.py envconfig.py requirements.txt requirements.lock)
 for file in "${app_files[@]}"; do install -o root -g root -m 644 "$SRC_DIR/$file" "$release/$file"; done
+for package in core modules; do
+  while IFS= read -r -d '' file; do
+    install -D -o root -g root -m 644 "$file" "$release/${file#"$SRC_DIR/"}"
+  done < <(find "$SRC_DIR/$package" -type f \( -name '*.py' -o -name '*.md' \) -print0)
+done
 "$PYTHON_BIN" -m venv "$release/venv"
 "$release/venv/bin/python" -m pip install --require-hashes --only-binary=:all: -r "$release/requirements.lock"
 "$release/venv/bin/python" -m pip check
@@ -87,7 +92,7 @@ trap rollback ERR
 if [[ "$was_active" -eq 1 ]]; then systemctl stop latochan; fi
 if [[ -f "$ENV_FILE" ]]; then install -m 600 "$ENV_FILE" "$backup/latochan.env"; fi
 install -d -m 700 "$backup/units" "$backup/helpers"
-for helper in lato-config lato-gifs lato-memory lato-say lato-watch; do
+for helper in lato-config lato-gifs lato-memory lato-say lato-watch lato-friends lato-prompt lato-recall lato-lights lato-reminders-edit lato-reminders; do
   if [[ -f "/usr/local/bin/$helper" ]]; then cp -a "/usr/local/bin/$helper" "$backup/helpers/"; fi
 done
 if [[ -f /etc/systemd/system/ollama.service.d/latochan-security.conf ]]; then
@@ -146,8 +151,8 @@ values.setdefault('DISCORD_BOT_TOKEN', '')
 values.setdefault('OWNER_ID', '')
 values.setdefault('CHANNEL_IDS', '')
 # Private context stays disabled until explicitly configured after installation.
-values['PRIVATE_CHANNEL_IDS'] = ''
-values['RAG_ENABLED'] = '0'
+values.setdefault('PRIVATE_CHANNEL_IDS', '')
+values.setdefault('RAG_ENABLED', '0')
 for key, prompt in [('DISCORD_BOT_TOKEN', 'Discord bot token'), ('OWNER_ID', 'Owner Discord user ID'), ('CHANNEL_IDS', 'Main channel IDs, comma separated')]:
     if not values[key]:
         if key == 'DISCORD_BOT_TOKEN':
@@ -191,14 +196,14 @@ done
 install -d -m 755 /etc/systemd/system/ollama.service.d
 cat > /etc/systemd/system/ollama.service.d/latochan-security.conf <<'CONF'
 [Service]
-Environment="OLLAMA_HOST=127.0.0.1:11434"
+Environment="OLLAMA_HOST=localhost:11434"
 Environment="OLLAMA_NO_CLOUD=1"
 CONF
 systemctl daemon-reload
 systemctl restart ollama
 ready=0
 for _ in $(seq 1 30); do
-  if curl --max-time 2 -fsS http://127.0.0.1:11434/api/version >/dev/null; then ready=1; break; fi
+  if curl --max-time 2 -fsS http://localhost:11434/api/version >/dev/null; then ready=1; break; fi
   sleep 1
 done
 [[ "$ready" -eq 1 ]] || { echo 'Ollama readiness failed'; false; }
@@ -206,7 +211,7 @@ if ! ollama show "$MODEL" >/dev/null 2>&1; then ollama pull "$MODEL"; fi
 # Test the selected custom model before changing the running app symlink.
 "$release/venv/bin/python" - "$MODEL" <<'PY'
 import requests, sys
-r = requests.post('http://127.0.0.1:11434/api/chat', json={'model': sys.argv[1], 'stream': False, 'think': False, 'messages': [{'role': 'user', 'content': 'Say hello briefly.'}], 'options': {'num_predict': 60}}, timeout=(5, 120))
+r = requests.post('http://localhost:11434/api/chat', json={'model': sys.argv[1], 'stream': False, 'think': False, 'messages': [{'role': 'user', 'content': 'Say hello briefly.'}], 'options': {'num_predict': 60}}, timeout=(5, 120))
 r.raise_for_status()
 if not r.json().get('message', {}).get('content'): raise ValueError('Model returned no answer')
 PY
@@ -216,7 +221,7 @@ activated=1
 install -m 644 "$SRC_DIR/deploy/systemd/latochan.service" /etc/systemd/system/latochan.service
 install -d -m 755 /etc/systemd/system/latochan.service.d
 install -m 644 "$SRC_DIR/deploy/systemd/latochan.service.d/hardening.conf" /etc/systemd/system/latochan.service.d/hardening.conf
-for helper in lato-config lato-gifs lato-memory lato-say lato-watch; do
+for helper in lato-config lato-gifs lato-memory lato-say lato-watch lato-friends lato-prompt lato-recall lato-lights lato-reminders-edit lato-reminders; do
   install -o root -g root -m 755 "$SRC_DIR/$helper" "/usr/local/bin/$helper"
 done
 systemctl daemon-reload
@@ -226,4 +231,4 @@ sleep 5
 systemctl is-active --quiet latochan
 trap - ERR
 printf 'Release active: %s\nPrevious release: %s\nBackup: %s\n' "$release" "${old_release:-legacy installation}" "$backup"
-printf 'Verify a Discord reply and /lato commands. See deploy/OPERATIONS.md for rollback and remaining production checks.\n'
+printf 'Verify a Discord reply and /help. See deploy/OPERATIONS.md for rollback and remaining production checks.\n'

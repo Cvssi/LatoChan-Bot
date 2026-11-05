@@ -1,0 +1,3 @@
+#!/bin/bash
+# LatoChan friends list. Changes apply to her next message, no restart.  lato-friends help
+exec python3 /opt/latochan/current/friends.py "$@"

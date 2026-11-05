@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
-"""LatoChan live settings: one schema shared by the gateway, `lato-config` and the a dashboard web UI.
-
-* Stdlib only, so the same file runs in the bot's venv and in the system python used by `lato-config`.
-* The settings file is /var/lib/latochan/settings.json (owner latochan, group of the admin user, mode 660).
-  Writers use a stable sidecar lock and atomic replacement. The setgid data directory preserves group access.
-* Readers never trust the file: every value is coerced and clamped against SCHEMA, unknown keys are
-  ignored, a torn or unreadable file keeps the last good values, a missing key falls back to its default.
-
-CLI (used by lato-config; prints JSON where noted):
-    botsettings.py show                  human summary
-    botsettings.py json                  {"values": {...}, "schema": [...]}
-    botsettings.py get KEY
-    botsettings.py set KEY VALUE         VALUE: on/off/toggle for switches, a number or a choice otherwise
-    botsettings.py apply                 JSON object {"key": value, ...} on stdin; all-or-nothing; prints the new values
-    botsettings.py reset [KEY ...]       back to defaults (all keys if none given)
-"""
+"""Live settings schema and CLI for LatoChan."""
 from __future__ import annotations
 
 import json
@@ -22,9 +7,10 @@ import os
 import sys
 import time
 from pathlib import Path
+
 from storage import atomic_write, locked
 
-VERSION = "1.1.0"
+VERSION = "2.1.0"
 DEFAULT_PATH = "/var/lib/latochan/settings.json"
 
 # kind: bool | int | float | choice.  group order below is the order the dashboard shows them in.
@@ -33,7 +19,10 @@ GROUPS = [
     ("model", "Voice & memory", "How the local model writes. Changes apply to her next message."),
     ("sleep", "Sleep & wake", "When she is up and when she dozes off."),
     ("gifs", "GIFs", "How often she posts a gif. Links live in the GIFs tab."),
-    ("timing", "Chat timing", "How patiently she waits and how chatty she is."),
+    ("replies", "Chatter",
+     "How she answers chat that isn't aimed at her (your messages in the main channel, friends' chat while she's "
+     "awake). When someone pings her, replies to her, says her name or asks a question, she always answers."),
+    ("timing", "Chat timing", "How patiently she waits."),
     ("features", "Abilities", "Things she can do. Turn off what you don't want."),
     ("mood", "Personality", "A gentle push on top of her persona file."),
 ]
@@ -55,18 +44,22 @@ SCHEMA = [
        min=60, max=1000, step=20, unit="tokens"),
     _s("history_turns", "model", "Conversation memory", "int", 12, "How many back-and-forths she keeps in mind per channel.",
        min=2, max=24, step=1, unit="turns"),
-    _s("memory_enabled", "model", "Personal notes", "bool", True, "Reads and writes her per-person notes ([[REMEMBER]])."),
+    _s("memory_enabled", "model", "Personal notes", "bool", False, "Reads and writes her per-person notes ([[REMEMBER]])."),
 
     _s("sleep_mode", "sleep", "Sleep mode", "bool", True, "Off = always awake and answering."),
     _s("awake_min_minutes", "sleep", "Stays awake at least", "float", 3, "After being woken.", min=0.5, max=60, step=0.5, unit="min"),
     _s("awake_max_minutes", "sleep", "Stays awake at most", "float", 10, "After being woken.", min=0.5, max=120, step=0.5, unit="min"),
+    _s("wake_sleepy", "sleep", "Sleepy when woken", "bool", True,
+       "She opens with a short grumpy/sleepy bit (-_- zzz) when someone wakes her. Off = she just answers."),
+    _s("wake_sleepy_chance", "sleep", "How often she's sleepy", "int", 100, "Of the times she's woken up.",
+       min=0, max=100, step=5, unit="%"),
     _s("friends_can_wake", "sleep", "Friends can wake her", "bool", True, "Off = only you can wake her."),
     _s("chimes_enabled", "sleep", "Wakes on her own", "bool", True, "She sometimes peeks at the chat and says something."),
     _s("chime_min_hours", "sleep", "Check-in at least every", "float", 2, "", min=0.25, max=24, step=0.25, unit="h"),
     _s("chime_max_hours", "sleep", "Check-in at most every", "float", 5, "", min=0.25, max=48, step=0.25, unit="h"),
     _s("chime_wait_seconds", "sleep", "Waits for an answer", "int", 60, "Back to sleep if nobody replies to a check-in.",
        min=10, max=900, step=10, unit="s"),
-    _s("quiet_hours_enabled", "sleep", "Quiet hours", "bool", False, "No unprompted check-ins during these hours (the bot's TIMEZONE)."),
+    _s("quiet_hours_enabled", "sleep", "Quiet hours", "bool", False, "No unprompted check-ins during these hours (server time)."),
     _s("quiet_from_hour", "sleep", "Quiet from", "int", 0, "", min=0, max=23, step=1, unit="o'clock"),
     _s("quiet_to_hour", "sleep", "Quiet until", "int", 8, "", min=0, max=23, step=1, unit="o'clock"),
 
@@ -89,16 +82,68 @@ SCHEMA = [
     _s("max_wait_seconds", "timing", "Longest she will wait", "int", 60, "", min=10, max=180, step=5, unit="s"),
     _s("other_cooldown_seconds", "timing", "Gap between replies to one person", "int", 6, "Anti-spam for everyone except you.",
        min=0, max=120, step=1, unit="s"),
-    _s("chatter_reply_chance", "timing", "Joins in when not spoken to", "int", 100,
-       "While awake, odds she even considers chatting along to friends.", min=0, max=100, step=5, unit="%"),
+    _s("chatter_reply_chance", "replies", "Notices friends' chatter", "int", 100,
+       "While awake, how much of friends' chat she even looks at. The rest she doesn't see at all.",
+       min=0, max=100, step=5, unit="%"),
+    # The four mix_* shares are one "pie" (LatoDash shows them as a single control that always adds up to 100).
+    # The bot scales them to 100 if they don't add up; shares she can't do right now (gifs or reactions off) go to reply.
+    _s("mix_ignore", "replies", "Leaves it on read", "int", 0, "No reply at all.", min=0, max=100, step=5, unit="%"),
+    _s("mix_react", "replies", "Just reacts", "int", 0, "An emoji reaction, no words.", min=0, max=100, step=5, unit="%"),
+    _s("mix_gif", "replies", "Just a gif", "int", 0, "A reaction gif, no words.", min=0, max=100, step=5, unit="%"),
+    _s("mix_reply", "replies", "Replies", "int", 100, "A normal reply (she can still decide to skip).",
+       min=0, max=100, step=5, unit="%"),
 
     _s("vision_enabled", "features", "Looks at pictures", "bool", True, "Images and gif frames sent to her."),
-    _s("server_powers", "features", "Server actions", "bool", False,
+    _s("server_powers", "features", "Server actions", "bool", True,
        "Reactions, VC, pins, timeouts and the other action tags. Off = she can only talk."),
 
     _s("sass", "mood", "Sass", "int", 5, "5 = as written in her persona.", min=0, max=10, step=1),
     _s("swearing", "mood", "Swearing", "choice", "rare", "", choices=["off", "rare", "more"]),
 ]
+
+
+# ---------------------------------------------------------------- module settings
+# Each feature module may have modules/<name>/settings.py with:
+#   GROUP = {"id": "...", "label": "...", "help": "..."}     (optional: its own card in the dashboard)
+#   SETTINGS = [{"key": ..., "label": ..., "kind": ..., "default": ..., "help": ..., "group": ...}, ...]
+# Settings without a "group" go in the module's GROUP; master switches (mod_<name>) use group "modules".
+# Stdlib only, plain data: they're loaded here by whatever python runs lato-config.
+MODULES_GROUP = ("modules", "Modules", "Whole features on or off. Each one is described in MODULES.md.")
+
+
+def _load_module_settings():
+    import importlib.util
+    from pathlib import Path
+    base = Path(__file__).resolve().parent / "modules"
+    groups, specs = [], []
+    if not base.is_dir():
+        return groups, specs
+    for f in sorted(base.glob("*/settings.py")):
+        name = f.parent.name
+        try:
+            spec = importlib.util.spec_from_file_location(f"_lato_settings_{name}", f)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            g = getattr(m, "GROUP", None)
+            if g:
+                groups.append((g["id"], g["label"], g.get("help", "")))
+            for s in getattr(m, "SETTINGS", []):
+                d = dict(s)
+                d.setdefault("group", g["id"] if g else MODULES_GROUP[0])
+                d.setdefault("help", "")
+                d["module"] = name
+                specs.append(d)
+        except Exception as e:   # a broken module must never break lato-config or the bot
+            print(f"warning: ignoring {f}: {e}", file=sys.stderr)
+    specs.sort(key=lambda d: d["group"] != MODULES_GROUP[0])   # all on/off switches together, then each module's card
+    return groups, specs
+
+
+_mg, _ms = _load_module_settings()
+if _ms:
+    GROUPS.append(MODULES_GROUP)
+    GROUPS.extend(g for g in _mg if g[0] not in {x[0] for x in GROUPS})
+    SCHEMA.extend(s for s in _ms if s["key"] not in {x["key"] for x in SCHEMA})
 
 BY_KEY = {s["key"]: s for s in SCHEMA}
 DEFAULTS = {s["key"]: s["default"] for s in SCHEMA}

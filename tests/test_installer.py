@@ -1,6 +1,7 @@
 """Exercise release activation/rollback with isolated paths and fake host commands."""
 from pathlib import Path
 import os
+import shlex
 import subprocess
 import tempfile
 import sys
@@ -21,7 +22,7 @@ def run_installer_case(fail, legacy=False):
         if not legacy:
             (app / 'current').symlink_to(previous)
         etc = base / 'etc'; etc.mkdir()
-        (etc / 'latochan.env').write_text('DISCORD_BOT_TOKEN=test\nOWNER_ID=111111111111111111\nCHANNEL_IDS=100\nLLM_MODEL=custom-model:latest\n')
+        (etc / 'latochan.env').write_text(f'DISCORD_BOT_TOKEN=test\nOWNER_ID={10**17 + 7}\nCHANNEL_IDS=100\nLLM_MODEL=custom-model:latest\n')
         (etc / 'systemd/system').mkdir(parents=True)
         original_unit='[Service]\nUser=latochan\n'
         (etc / 'systemd/system/latochan.service').write_text(original_unit)
@@ -61,7 +62,7 @@ if [ "$1" = -m ] && [ "$2" = pip ]; then exit 0; fi
 exec {PYTHON} "$@"
 ''')
         script = (ROOT / 'setup.sh').read_text()
-        script = script.replace('SRC_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"', 'SRC_DIR=' + str(ROOT))
+        script = script.replace('SRC_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"', 'SRC_DIR=' + shlex.quote(str(ROOT)))
         for prefix in ['/opt/latochan', '/var/lib/latochan', '/etc', '/usr/local/bin']:
             script = script.replace(prefix, str(base) + prefix)
         # compileall never traverses fake interpreter symlinks; application source is real.

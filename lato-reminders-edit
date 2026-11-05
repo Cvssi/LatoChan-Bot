@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Edit LatoChan's reminders (the pinned "📋 LatoChan state" message) from LatoDash. Run as root (sudo): it reads the
+bot token from /etc/latochan.env. ONE JSON operation on stdin, JSON result on stdout; errors: "rejected: ..." + exit 1.
+
+  {"op": "list"}
+  {"op": "add",    "text": "...", "when": "2026-11-09T10:00" | null}        when = server-local time (or null = no time)
+  {"op": "update", "id": "ab12cd34", "text": "...", "when": "..." | null}   (either field may be left out)
+  {"op": "done",   "id": "ab12cd34", "done": true|false}
+  {"op": "remove", "id": "ab12cd34"}
+
+Same JSON shape as the reminder timer: {"reminders": [{"text", "due", "done", "sent"}]},
+due = UTC ISO. A reminder's id is a hash of its text + due, so nothing extra is stored.
+"""
+import datetime
+import hashlib
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from zoneinfo import ZoneInfo
+
+API = "https://discord.com/api/v10"
+def operator_timezone():
+    return ZoneInfo(os.environ.get("TIMEZONE", "UTC"))
+
+MAX_TEXT = 300
+
+
+class Rejected(ValueError):
+    pass
+
+
+def rid(r: dict) -> str:
+    return hashlib.sha1(f"{r.get('text', '')}|{r.get('due') or ''}".encode()).hexdigest()[:8]
+
+
+def to_utc(when) -> str | None:
+    """'2026-11-09T10:00' (server-local) -> '2026-11-09T10:00:00+00:00'. None/'' -> None."""
+    if not when:
+        return None
+    try:
+        dt = datetime.datetime.fromisoformat(str(when))
+    except ValueError as e:
+        raise Rejected("time must look like 2026-11-09T10:00") from e
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=operator_timezone())
+    return dt.astimezone(datetime.timezone.utc).isoformat(timespec="seconds")
+
+
+def clean_text(t) -> str:
+    t = " ".join(str(t or "").split())[:MAX_TEXT]
+    t = t.replace("@everyone", "everyone").replace("@here", "here")
+    if not t:
+        raise Rejected("reminder text is empty")
+    return t
+
+
+def view(state: dict) -> list[dict]:
+    out = []
+    for r in state.get("reminders", []):
+        due = r.get("due")
+        local = None
+        if due:
+            try:
+                local = datetime.datetime.fromisoformat(due).astimezone(operator_timezone()).strftime("%Y-%m-%dT%H:%M")
+            except ValueError:
+                local = None
+        out.append({"id": rid(r), "text": r.get("text", ""), "due": due, "when": local,
+                    "done": bool(r.get("done")), "sent": bool(r.get("sent"))})
+    return out
+
+
+def apply(state: dict, op: dict) -> dict:
+    """Pure: returns the new state (raises Rejected on bad input)."""
+    rs = [dict(r) for r in state.get("reminders", [])]
+    kind = op.get("op")
+    if kind == "add":
+        rs.append({"text": clean_text(op.get("text")), "due": to_utc(op.get("when"))})
+    elif kind in ("update", "done", "remove"):
+        hit = [i for i, r in enumerate(rs) if rid(r) == op.get("id")]
+        if not hit:
+            raise Rejected("that reminder isn't there any more (refresh)")
+        i = hit[0]
+        if kind == "remove":
+            rs.pop(i)
+        elif kind == "done":
+            rs[i]["done"] = bool(op.get("done", True))
+        else:
+            if "text" in op:
+                rs[i]["text"] = clean_text(op["text"])
+            if "when" in op:
+                rs[i]["due"] = to_utc(op["when"])
+                rs[i].pop("sent", None)          # new time: it should fire again
+                rs[i].pop("sent_at", None)
+    else:
+        raise Rejected("op must be list, add, update, done or remove")
+    return {**state, "reminders": rs}
+
+
+def render(tag: str, state: dict) -> str:
+    keep = state.get("reminders", [])
+    pretty = "\n".join(f"{'✅' if r.get('done') else '⏰'} {r['text']} — {r.get('due') or 'no time'}" for r in keep)
+    body = f"{tag}\n{pretty or '(no reminders)'}\n```json\n{json.dumps(state, separators=(',', ':'), ensure_ascii=False)}\n```"
+    if len(body) > 2000:
+        raise Rejected("too many / too long reminders for one Discord message: remove some first")
+    return body
+
+
+def main() -> None:
+    sys.path.insert(0, "/opt/latochan/current")      # only when run as the command: importing this file (tests) must not change sys.path
+    try:
+        op = json.loads(sys.stdin.read(8192) or "{}")
+        if not isinstance(op, dict):
+            raise Rejected("expected a JSON object")
+        from envconfig import load_ids
+
+        env = load_ids()
+        os.environ["TIMEZONE"] = env.get("TIMEZONE", "UTC")
+        import latoids
+        hdr = {"Authorization": f"Bot {env['DISCORD_BOT_TOKEN']}", "Content-Type": "application/json",
+               "User-Agent": "DiscordBot (latochan, 1.0)"}
+
+        def rest(method, path, body=None):
+            req = urllib.request.Request(API + path, method=method, headers=hdr,
+                                         data=json.dumps(body).encode() if body is not None else None)
+            with urllib.request.urlopen(req, timeout=20) as r:
+                raw = r.read()
+                return json.loads(raw) if raw else None
+
+        ch = latoids.MAIN_CHANNEL
+        pin = next((m for m in rest("GET", f"/channels/{ch}/pins") or []
+                    if m["author"]["id"] == latoids.BOT_ID and m["content"].startswith(latoids.STATE_TAG)), None)
+        if not pin:
+            raise Rejected("no pinned 📋 LatoChan state message in the main channel")
+        state = json.loads(pin["content"].split("```json", 1)[1].rsplit("```", 1)[0])
+        if op.get("op") != "list":
+            state = apply(state, op)
+            rest("PATCH", f"/channels/{ch}/messages/{pin['id']}", {"content": render(latoids.STATE_TAG, state)})
+        print(json.dumps({"reminders": view(state), "tz": operator_timezone().key}, ensure_ascii=False))
+    except Rejected as e:
+        sys.exit(f"rejected: {e}")
+    except urllib.error.HTTPError as e:
+        sys.exit(f"discord HTTP {e.code}")
+
+
+if __name__ == "__main__":
+    main()

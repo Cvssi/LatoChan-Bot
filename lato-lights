@@ -1,0 +1,3 @@
+#!/bin/bash
+# Lights setup/testing for LatoChan. Run with sudo.  sudo lato-lights help
+exec /opt/latochan/current/venv/bin/python /opt/latochan/current/modules/lights/cli.py "$@"

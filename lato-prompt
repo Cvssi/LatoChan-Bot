@@ -1,0 +1,6 @@
+#!/bin/bash
+# What goes into LatoChan's system prompt right now (live module on/off states). Read-only.
+#   lato-prompt          size of each part (persona, rules, each module)
+#   lato-prompt --raw    the whole prompt, exactly as the model gets it
+#   lato-prompt --json   for LatoDash
+cd /opt/latochan/current && exec ./venv/bin/python -B -m core.promptinfo "$@"
