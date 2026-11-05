@@ -19,10 +19,10 @@ These changes are local source changes until an administrator deploys them. The 
 Copy the reviewed source to a staging folder on the server, then run:
 
 ```bash
-bash deploy/collect-review-evidence.sh YOUR_MODEL_NAME
+bash deploy/check.sh
 ```
 
-This prints dependency versions, codec versions, selected systemd properties, file permissions, the Ollama listener, and model capabilities. It does not print tokens, persona text, memory, environment contents or messages. Review this output before installing. Check Discord's role hierarchy, channel overwrites, message-content/member intents, and separate Pin Messages permission in the Discord UI.
+This runs the dependency, source, and regression checks. It does not print tokens, persona text, memory, environment contents or messages. Review this output before installing. Check Discord's role hierarchy, channel overwrites, message-content/member intents, and separate Pin Messages permission in the Discord UI.
 
 ## Pre-deployment
 
@@ -47,7 +47,7 @@ The installer tests substitute temporary paths and fake host commands. They do n
 sudo bash setup.sh
 ```
 
-The existing `LLM_MODEL` is preserved unless an explicit `MODEL=...` is passed. An existing custom model does not need to be replaced with the fresh-install default. GPU tuning is never installed or changed by this command. Existing `PERSONA_PATH` is preserved; otherwise the installer preserves an existing persona into `/etc/latochan/persona.md`.
+The existing `LLM_MODEL` is preserved unless an explicit `MODEL=...` is passed. An existing custom model does not need to be replaced with the fresh-install default. Existing `PERSONA_PATH` is preserved; otherwise the installer preserves an existing persona into `/etc/latochan/persona.md`.
 
 The operator may need to reconnect their SSH session after being added to the service/admin group before using the CLI without sudo.
 
@@ -56,7 +56,7 @@ The installer records a backup under `/opt/latochan/backups/` and the old releas
 ## Verification after activation
 
 - Confirm the service is active and a real owner chat receives a reply from the intended model.
-- Check an ordinary request to mute someone produces no moderation. Test explicit `/lato` commands in a disposable channel using a test member, including a wrong target, denied permission, duplicate event and reconnect.
+- Verify owner permissions and action gating in a disposable channel. Exercise denied permissions, an ambiguous target, and a reconnect.
 - Check actual action outcomes match replies. Test pin/unpin with `PIN_MESSAGES` and message delete with `MANAGE_MESSAGES` separately.
 - Keep private context disabled. Confirm ordinary chat cannot write notes through model-generated tags.
 - Confirm image replies with your vision-capable model, text-only fallback when images are disabled, and bounded behavior under a small controlled burst. Watch latency/RAM and the journal for errors without enabling content logs unnecessarily.

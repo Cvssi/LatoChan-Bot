@@ -1,42 +1,12 @@
-# Run LatoChan
+# Getting started
 
-## Supported server
+LatoChan runs on Linux with systemd, CPython 3.14, Cairo, and a separately installed Ollama. Pick a locally available model appropriate to your hardware. Use a disposable Discord server for the first integration test.
 
-Use a Linux x86_64 server with systemd, CPython 3.14 and venv/pip support, curl, and a separately installed local Ollama. Choose a model that fits your RAM/VRAM and download it before installation. Other platforms need their own resolved and audited dependency lock.
+1. Create a Discord application and add its bot to your test server. Enable Message Content Intent. Enable Server Members Intent if configured, and Presence Intent only for presence-based features.
+2. Review [the environment template](deploy/latochan.env.example) and [the operating notes](deploy/OPERATIONS.md). The token, channel configuration, and persona belong on the server, outside the repository.
+3. Review `setup.sh` before running it. It stages a root-owned release, keeps a backup, and uses a separate service account. Confirm the release checks in [Release status](RELEASE_STATUS.md) before relying on the installer in production.
+4. Run `lato-config show` to see live settings. Set `GUILD_ID` for server-specific `/help` registration.
 
-Create a Discord application and bot, enable Message Content Intent and Server Members Intent, and invite it with only the permissions required for your chosen features. Collect your owner user ID and allowed channel IDs. Keep the bot token private.
+Voice, weather, device control, and reminders need additional configuration. The dashboard and server helpers must come from compatible revisions.
 
-## Get and validate the source
-
-Clone the published repository:
-
-```bash
-git clone https://github.com/Cvssi/LatoChan-Bot.git
-cd LatoChan-Bot
-python3.14 -m venv .venv
-.venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements.lock
-.venv/bin/python -m unittest discover -s tests -v
-.venv/bin/python tests_gifmode.py .
-bash -n setup.sh
-```
-
-Tests use fake external connections. They do not start a live Discord bot.
-
-## Install when ready
-
-Read [deployment and recovery](deploy/OPERATIONS.md), review `setup.sh`, and verify backups before upgrading an existing installation. Pause dashboard writers. Choose your downloaded local model explicitly for a fresh installation:
-
-```bash
-sudo env PYTHON_BIN=python3.14 MODEL=YOUR_MODEL_NAME bash setup.sh
-```
-
-The installer asks for the Discord token, owner ID and channel IDs when missing. Do not put the token in command arguments. It installs and starts the systemd service. It preserves existing model selection when `MODEL` is omitted. Private memory/retrieval stays disabled until explicitly configured after installation.
-
-```bash
-systemctl is-active latochan
-bash deploy/collect-review-evidence.sh YOUR_MODEL_NAME
-```
-
-Reconnect SSH to pick up group membership. Configure secrets using `sudoedit /etc/latochan.env`, then restart with `sudo systemctl restart latochan`. Keep that file root-owned mode 0600. Edit the installed persona at `/etc/latochan/persona.md` unless an existing custom path was preserved. Do not edit release code in place.
-
-In an allowed test channel, mention the bot and check its reply. Keep server powers disabled until explicit owner commands and Discord permissions have been tested. See the README for commands and settings. LatoDash is optional and has its own setup guide.
+For optional speech synthesis, place a Piper voice model and its companion configuration in `/var/lib/latovoice/voices/`. Set `VOICE_NAME` to the model’s filename without the `.onnx` extension in `/etc/latovoice.env` and restart the worker. Choose a voice whose license fits your use.

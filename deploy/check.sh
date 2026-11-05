@@ -4,7 +4,6 @@ set -euo pipefail
 cd -- "$(dirname -- "$0")/.."
 python -m pip check
 python -m unittest discover -s tests -v
-python tests_gifmode.py .
+python tests/golden.py
 bash -n setup.sh
-bash -n deploy/collect-review-evidence.sh
 if command -v ruff >/dev/null; then ruff check --select E9,F .; fi

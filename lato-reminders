@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Posts due LatoChan reminders from the pinned state message.
+Run by lato-reminders.timer every 2 minutes. Token comes from /etc/latochan.env via systemd."""
+import json, os, sys, urllib.request, urllib.error
+sys.path.insert(0, "/opt/latochan/current")
+import latoids
+from datetime import datetime, timezone, timedelta
+
+TOKEN = os.environ["DISCORD_BOT_TOKEN"]
+CHANNEL = latoids.MAIN_CHANNEL
+BOT_ID = latoids.BOT_ID
+OWNER = latoids.OWNER_ID
+API = "https://discord.com/api/v10"
+HDR = {"Authorization": f"Bot {TOKEN}", "Content-Type": "application/json", "User-Agent": "DiscordBot (latochan, 1.0)"}
+TAG = latoids.STATE_TAG
+
+
+def rest(method, path, body=None):
+    req = urllib.request.Request(API + path, method=method, headers=HDR,
+                                 data=json.dumps(body).encode() if body is not None else None)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        raw = r.read()
+        return json.loads(raw) if raw else None
+
+
+def when(value):
+    """A reminder's time as an aware datetime, or None if it is missing or unreadable. Times without a zone count as
+    UTC (that is what the state message is documented to hold), so one odd entry can't stop every other reminder."""
+    try:
+        dt = datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def render(state):
+    keep = state.get("reminders", [])
+    pretty = "\n".join(f"{'✅' if r.get('done') else '⏰'} {r.get('text', '')} — {r.get('due') or 'no time'}" for r in keep)
+    return f"{TAG}\n{pretty or '(no reminders)'}\n```json\n{json.dumps(state, separators=(',', ':'), ensure_ascii=False)}\n```"
+
+
+def save(pin_id, state):
+    """Write the state back. Discord caps a message at 2000 characters and cutting the JSON in half would lose every
+    reminder, so if it is too long the oldest finished ones go first."""
+    text = render(state)
+    while len(text) > 2000:
+        old = next((r for r in state["reminders"] if r.get("sent") or r.get("done")), None)
+        if old is None:
+            sys.exit("state message too long and nothing finished to drop: remove a reminder")
+        state["reminders"].remove(old)
+        text = render(state)
+    rest("PATCH", f"/channels/{CHANNEL}/messages/{pin_id}", {"content": text})
+
+
+def main():
+    pin = next((m for m in rest("GET", f"/channels/{CHANNEL}/pins") or []
+                if m["author"]["id"] == BOT_ID and m["content"].startswith(TAG)), None)
+    if not pin:
+        return
+    state = json.loads(pin["content"].split("```json", 1)[1].rsplit("```", 1)[0])
+    now = datetime.now(timezone.utc)
+    for r in state.get("reminders", []):
+        due = when(r.get("due"))
+        if r.get("done") or r.get("sent") or due is None or due > now:
+            continue
+        rest("POST", f"/channels/{CHANNEL}/messages",
+             {"content": f"<@{OWNER}> ⏰ {r['text']}"[:2000], "allowed_mentions": {"parse": [], "users": [OWNER]}})
+        r["sent"] = True
+        r["sent_at"] = now.isoformat(timespec="minutes")
+        print("reminder sent")
+        save(pin["id"], state)          # remember it NOW: if a later step fails, the next run must not send it again
+    # prune done/sent older than 2 days
+    keep = []
+    for r in state.get("reminders", []):
+        t = when(r.get("sent_at") or r.get("due")) if (r.get("sent") or r.get("done")) else None
+        if t and t < now - timedelta(days=2):
+            continue
+        keep.append(r)
+    if len(keep) != len(state.get("reminders", [])):
+        state["reminders"] = keep
+        save(pin["id"], state)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except urllib.error.HTTPError as e:
+        sys.exit(f"discord HTTP {e.code}")

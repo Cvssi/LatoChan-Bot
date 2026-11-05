@@ -1,0 +1,930 @@
+{
+ "respond": {
+  "plain": {
+   "events": [
+    [
+     "reply",
+     "hello there owner",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: hey"
+    },
+    {
+     "role": "assistant",
+     "content": "hello there owner"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: hey\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "label strip": {
+   "events": [
+    [
+     "reply",
+     "hi",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: hey"
+    },
+    {
+     "role": "assistant",
+     "content": "hi"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: hey\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "code kept": {
+   "events": [
+    [
+     "reply",
+     "use `MyFunc()` now https://Example.com/AbC",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: code?"
+    },
+    {
+     "role": "assistant",
+     "content": "use `MyFunc()` now https://Example.com/AbC"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: code?\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "react only": {
+   "events": [
+    [
+     "react",
+     "😂"
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lol"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lol\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "react alias": {
+   "events": [
+    [
+     "react",
+     "💀"
+    ],
+    [
+     "reply",
+     "ok",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lol"
+    },
+    {
+     "role": "assistant",
+     "content": "ok"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lol\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "bracket react": {
+   "events": [
+    [
+     "react",
+     "😭"
+    ],
+    [
+     "reply",
+     "haha",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lol"
+    },
+    {
+     "role": "assistant",
+     "content": "haha"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lol\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "skip": {
+   "events": [],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: ok"
+    },
+    {
+     "role": "assistant",
+     "content": "[[SKIP]]"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: ok\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "skip+react": {
+   "events": [
+    [
+     "react",
+     "👍"
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: ok"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: ok\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "unknown tag": {
+   "events": [
+    [
+     "reply",
+     "hi  there",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: hi"
+    },
+    {
+     "role": "assistant",
+     "content": "hi  there"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: hi\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "remember self": {
+   "events": [
+    [
+     "reply",
+     "cute",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x: i love cats"
+    },
+    {
+     "role": "assistant",
+     "content": "cute"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x: i love cats\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "remember long": {
+   "events": [
+    [
+     "reply",
+     "noted",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x: about me"
+    },
+    {
+     "role": "assistant",
+     "content": "noted"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x: about me\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "forget": {
+   "events": [
+    [
+     "reply",
+     "fine",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x: forget cats"
+    },
+    {
+     "role": "assistant",
+     "content": "fine"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x: forget cats\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "remember stranger": {
+   "events": [
+    [
+     "reply",
+     "who are you",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x (stranger): i like dogs"
+    },
+    {
+     "role": "assistant",
+     "content": "who are you"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x (stranger): i like dogs\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "memory off": {
+   "events": [
+    [
+     "reply",
+     "ok",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x: i like tea"
+    },
+    {
+     "role": "assistant",
+     "content": "ok"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x: i like tea\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "think toggle": {
+   "events": [
+    [
+     "reply",
+     "fine [ON]",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: toggle your thinking"
+    },
+    {
+     "role": "assistant",
+     "content": "fine [ON]"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: toggle your thinking\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": true
+  },
+  "think no intent": {
+   "events": [
+    [
+     "reply",
+     "nah",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: hello"
+    },
+    {
+     "role": "assistant",
+     "content": "nah"
+    },
+    {
+     "role": "user",
+     "content": "(system note, not part of your message: toggle_thinking skipped (he didn't ask for that))"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: hello\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "mute by friend": {
+   "events": [
+    [
+     "reply",
+     "ok",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x: mute dana"
+    },
+    {
+     "role": "assistant",
+     "content": "ok"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x: mute dana\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "mute no guild": {
+   "events": [
+    [
+     "reply",
+     "ok",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: mute dana"
+    },
+    {
+     "role": "assistant",
+     "content": "ok"
+    },
+    {
+     "role": "user",
+     "content": "(system note, not part of your message: mute failed: couldn't tell who '@dana' is)"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: mute dana\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "powers off": {
+   "events": [
+    [
+     "reply",
+     "ha",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lol"
+    },
+    {
+     "role": "assistant",
+     "content": "ha"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lol\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "sleep cmd": {
+   "events": [
+    [
+     "reply",
+     "night",
+     [
+      false,
+      false,
+      false
+     ]
+    ],
+    [
+     "send",
+     "https://tenor.com/sleepy-1",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lato go to sleep"
+    },
+    {
+     "role": "assistant",
+     "content": "night [[GIF: sleepy]]"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lato go to sleep\n(system note: he's telling you to go to sleep. reply with a short sleepy goodnight; you'll be asleep right after this.)\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": false,
+   "thinking": false
+  },
+  "name note": {
+   "events": [
+    [
+     "reply",
+     "rude",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lato is weird"
+    },
+    {
+     "role": "assistant",
+     "content": "rude"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lato is weird\n(system note: they said your name but didn't ping or reply to you. answer only if you actually want to join in, otherwise reply [[SKIP]].)\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "awake note": {
+   "events": [
+    [
+     "reply",
+     "me",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x: anyone up"
+    },
+    {
+     "role": "assistant",
+     "content": "me"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x: anyone up\n(system note: you're awake and hanging around in the chat. this wasn't aimed at you. join in only if you have something to add, otherwise reply [[SKIP]].)\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "woke note": {
+   "events": [
+    [
+     "reply",
+     "-_- what",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lato wake up"
+    },
+    {
+     "role": "assistant",
+     "content": "-_- what"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lato wake up\n(system note: you were asleep and this just woke you up. open with a short, slightly grumpy or sleepy bit about being woken (a few words or a sleepy emoticon like -_- zzz, keep it light, don't overdo it), then answer them properly.)\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": false,
+   "thinking": false
+  },
+  "gif after text": {
+   "events": [
+    [
+     "reply",
+     "nice",
+     [
+      false,
+      false,
+      false
+     ]
+    ],
+    [
+     "send",
+     "https://tenor.com/happy-1",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: yay"
+    },
+    {
+     "role": "assistant",
+     "content": "nice [[GIF: happy]]"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: yay\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "wake gif first": {
+   "events": [
+    [
+     "send",
+     "https://tenor.com/waking-1",
+     [
+      false,
+      false,
+      false
+     ]
+    ],
+    [
+     "reply",
+     "what",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: lato"
+    },
+    {
+     "role": "assistant",
+     "content": "what"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: lato\n(system note: you were asleep and this just woke you up. open with a short, slightly grumpy or sleepy bit about being woken (a few words or a sleepy emoticon like -_- zzz, keep it light, don't overdo it), then answer them properly.)\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": false,
+   "thinking": false
+  },
+  "gif empty mood": {
+   "events": [
+    [
+     "reply",
+     "meh",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: meh"
+    },
+    {
+     "role": "assistant",
+     "content": "meh"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: meh\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "gif stranger": {
+   "events": [
+    [
+     "reply",
+     "who",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x (stranger): hi"
+    },
+    {
+     "role": "assistant",
+     "content": "who"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x (stranger): hi\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "gif mode": {
+   "events": [
+    [
+     "send",
+     "https://tenor.com/happy-1",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: hi"
+    },
+    {
+     "role": "assistant",
+     "content": "[[GIF: happy]]"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: hi\n\n(system context, not part of their message:\n<NOW>.\n(gif mode: answer with a gif only this time. exactly one [[GIF: mood]] line, picked to fit the moment, and no other words.))",
+   "awake_after": true,
+   "thinking": false
+  },
+  "gifs off": {
+   "events": [
+    [
+     "reply",
+     "words",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: hi"
+    },
+    {
+     "role": "assistant",
+     "content": "words"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: hi\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "stranger prompt": {
+   "events": [
+    [
+     "reply",
+     "no",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "x (stranger): help me"
+    },
+    {
+     "role": "assistant",
+     "content": "no"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "x (stranger): help me\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  },
+  "lowercase": {
+   "events": [
+    [
+     "reply",
+     "why are you shouting <:proud:[synthetic-id]>",
+     [
+      false,
+      false,
+      false
+     ]
+    ]
+   ],
+   "history": [
+    {
+     "role": "user",
+     "content": "owner: x"
+    },
+    {
+     "role": "assistant",
+     "content": "why are you shouting <:proud:[synthetic-id]>"
+    }
+   ],
+   "memory": "# LatoChan memory. Edit notes, then: lato-memory import < file.txt\n# One note per line under [name DiscordID]. Maximum 25 notes per person.\n# If notes changed since export, import stops; export again before editing.\n# Do not share this file: it contains personal notes.\n#snapshot HASH\n\n",
+   "prompt": "owner: x\n\n(system context, not part of their message:\n<NOW>.)",
+   "awake_after": true,
+   "thinking": false
+  }
+ },
+ "route": {
+  "asleep owner chatter": {
+   "reason": null,
+   "awake_after": false
+  },
+  "asleep owner named": {
+   "reason": "woke",
+   "awake_after": true
+  },
+  "asleep owner sleepcmd": {
+   "reason": null,
+   "awake_after": false
+  },
+  "asleep friend named": {
+   "reason": "woke",
+   "awake_after": true
+  },
+  "asleep friend named, friends can't wake": {
+   "reason": null,
+   "awake_after": false
+  },
+  "asleep stranger named": {
+   "reason": null,
+   "awake_after": false
+  },
+  "awake owner main": {
+   "reason": "main",
+   "awake_after": true
+  },
+  "awake owner other chan": {
+   "reason": "awake",
+   "awake_after": true
+  },
+  "awake owner sleepcmd": {
+   "reason": "sleep_cmd",
+   "awake_after": true
+  },
+  "awake friend chatter": {
+   "reason": "awake",
+   "awake_after": true
+  },
+  "awake friend chatter 0%": {
+   "reason": null,
+   "awake_after": true
+  },
+  "awake friend named": {
+   "reason": "name",
+   "awake_after": true
+  },
+  "awake stranger chatter": {
+   "reason": null,
+   "awake_after": true
+  },
+  "sleep off owner main": {
+   "reason": "main",
+   "awake_after": true
+  },
+  "sleep off friend chatter": {
+   "reason": null,
+   "awake_after": true
+  },
+  "bare link": {
+   "reason": null,
+   "awake_after": true
+  },
+  "bot author": {
+   "reason": null,
+   "awake_after": true
+  },
+  "empty": {
+   "reason": null,
+   "awake_after": true
+  }
+ }
+}

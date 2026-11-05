@@ -1,0 +1,20 @@
+GROUP = {"id": "weather", "label": "Weather", "help": "Your weather station (via Weather Underground) + a free forecast (Open-Meteo)."}
+SETTINGS = [
+    {"key": "mod_weather", "group": "modules", "label": "Weather", "kind": "bool", "default": False,
+     "help": "She knows the weather at home from your station and can warn about frost, gusts, rain and heat."},
+    {"key": "weather_poll_min", "label": "Check the station every (min)", "kind": "int", "default": 5, "min": 2, "max": 60, "step": 1,
+     "help": "The station uploads every few minutes; WU allows plenty of calls."},
+    {"key": "weather_alert_frost", "label": "Frost alert", "kind": "bool", "default": True, "help": "0 °C or below (once per 12 h)."},
+    {"key": "weather_alert_gust", "label": "Strong gust alert", "kind": "bool", "default": True, "help": "Gust at or above the limit below (once per 6 h)."},
+    {"key": "weather_gust_kmh", "label": "Gust alert limit (km/h)", "kind": "int", "default": 55, "min": 20, "max": 150, "step": 5,
+     "help": "55 km/h is about a gale-force gust."},
+    {"key": "weather_alert_rain", "label": "Rain starting alert", "kind": "bool", "default": False,
+     "help": "When it starts raining after 3+ dry hours. Off by default."},
+    {"key": "weather_alert_heat", "label": "Heat alert", "kind": "bool", "default": True, "help": "28 °C or above (once per 12 h)."},
+    {"key": "weather_morning", "label": "Morning weather line", "kind": "bool", "default": False,
+     "help": "One short line in the main channel each morning: overnight low, rain, and the forecast."},
+    {"key": "weather_morning_hour", "label": "Morning line at (server hour)", "kind": "int", "default": 8, "min": 5, "max": 12, "step": 1,
+     "help": "Hour for the morning line."},
+    {"key": "weather_quiet", "label": "No alerts in quiet hours", "kind": "bool", "default": True,
+     "help": "Uses the quiet hours from Sleep & wake. A frost that's still there afterwards is still reported."},
+]

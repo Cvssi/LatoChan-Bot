@@ -1,6 +1,6 @@
 """LatoChan per-person memory: short notes in SQLite, keyed by Discord user ID.
 
-Explicit owner /lato remember and /lato forget commands manage private notes (handled in gateway.py).
+She saves notes herself with [[REMEMBER: ...]] / removes them with [[FORGET: ...]] (handled in modules/memory).
 Only a few short notes about the people in the conversation go into each prompt, picked by
 word overlap with the message, then by recency, so the prompt stays small.
 
@@ -11,16 +11,22 @@ CLI (run via the lato-memory wrapper):
   lato-memory wipe <user_id>          delete every note about one person
   lato-memory export                  print all notes as an editable text file
   lato-memory import < file.txt       replace all notes with the file's contents
+  lato-memory me                      what she has decided about herself ([[ME: topic = value]])
+  lato-memory me-set <topic> = <value>   set one by hand      lato-memory me-del <topic>   delete one
+  lato-memory me-history [topic]      every change she made, oldest first
+
+Her own canon ("about me") is separate from the notes about people: one value per topic, so a new decision replaces
+the old one instead of contradicting it; every change is kept in me_history.
 """
 import difflib
 import hashlib
 import json
-import uuid
 import os
 import re
 import sqlite3
 import sys
 import time
+import uuid
 from pathlib import Path
 
 DB_PATH = Path(os.environ.get("MEMORY_DB", "/var/lib/latochan/memory.db"))
@@ -32,17 +38,32 @@ STOP = set("the and but for are was were been you your his her their they them t
            "have has had not dont can will would like its it's im i'm thing things stuff that".split())
 
 
+_ready: Path | None = None    # the DB file whose tables and permissions were already set up in this process
+
+
 def _db():
+    global _ready
+    fresh = _ready != DB_PATH or not DB_PATH.exists()      # set up once per process (and again if the file is replaced)
     con = sqlite3.connect(DB_PATH, timeout=5)
+    if fresh:
+        _setup(con)
+        _ready = DB_PATH
+    return con
+
+
+def _setup(con) -> None:
     con.execute("""CREATE TABLE IF NOT EXISTS notes(
         id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT, note TEXT NOT NULL,
         by_id INTEGER, created INTEGER NOT NULL, updated INTEGER NOT NULL)""")
     con.execute("CREATE INDEX IF NOT EXISTS notes_user ON notes(user_id)")
+    con.execute("""CREATE TABLE IF NOT EXISTS me(
+        topic TEXT PRIMARY KEY, value TEXT NOT NULL, asked_by INTEGER, created INTEGER NOT NULL, updated INTEGER NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS me_history(
+        id INTEGER PRIMARY KEY, topic TEXT NOT NULL, value TEXT, asked_by INTEGER, ts INTEGER NOT NULL)""")
     try:
-        os.chmod(DB_PATH, 0o660)  # the service (latochan) and the admin user's tools both write it
+        os.chmod(DB_PATH, 0o660)  # the service (latochan) and owner's .bat files both write it
     except OSError:
         pass
-    return con
 
 
 def _run(fn, *, write=False):
@@ -50,7 +71,7 @@ def _run(fn, *, write=False):
     try:
         with con:
             if write:
-                con.execute("BEGIN IMMEDIATE")
+                con.execute('BEGIN IMMEDIATE')
             return fn(con)
     finally:
         con.close()
@@ -87,7 +108,7 @@ def add(user_id: int, name: str, note: str, by_id: int | None = None) -> str:
                        (SELECT id FROM notes WHERE user_id=? ORDER BY updated DESC LIMIT ?)""",
                     (user_id, user_id, MAX_PER_USER))
         return "saved"
-    return _run(go, write=True)
+    return _run(go)
 
 
 def forget(user_id: int, text: str) -> str | None:
@@ -106,7 +127,7 @@ def forget(user_id: int, text: str) -> str | None:
             con.execute("DELETE FROM notes WHERE id=?", (best[0],))
             return best[1]
         return None
-    return _run(go, write=True)
+    return _run(go)
 
 
 def pick(user_id: int, query: str, n: int) -> list[str]:
@@ -114,6 +135,90 @@ def pick(user_id: int, query: str, n: int) -> list[str]:
     rows = _run(lambda con: con.execute("SELECT note, updated FROM notes WHERE user_id=?", (user_id,)).fetchall())
     rows.sort(key=lambda r: (_overlap(q, _words(r[0])), r[1]), reverse=True)
     return [r[0] for r in rows[:n]]
+
+
+# ---------------------------------------------------------------- her own canon
+MAX_ME = 60           # topics kept (least recently touched dropped beyond this)
+SHOW_ME = 8           # per prompt
+MAX_TOPIC, MAX_VALUE = 40, 120
+SPELL = {"color": "colour", "colors": "colours", "favorite": "favourite", "favourites": "favourite", "fav": "favourite",
+         "favs": "favourite", "fave": "favourite"}
+
+
+def topic_key(topic: str) -> str:
+    words = re.findall(r"[a-z0-9']+", topic.lower().replace("_", " "))
+    words = [SPELL.get(w, w) for w in words if w not in ("my", "the", "a", "an", "lato", "latochan")]
+    return " ".join(words)[:MAX_TOPIC]
+
+
+def parse_me(arg: str) -> tuple[str, str] | None:
+    """'role colour = teal (#2ec4b6)' / 'favourite game: hollow knight' -> (topic, value)"""
+    m = re.match(r"\s*(.+?)\s*(?:=|:|->|\bis\b)\s*(.+)", arg or "")
+    if not m:
+        return None
+    topic, value = topic_key(m.group(1)), re.sub(r"\s+", " ", m.group(2)).strip(" .\"'")[:MAX_VALUE]
+    return (topic, value) if len(topic) >= 2 and value else None
+
+
+def _same_topic(con, key: str) -> str:
+    """An existing topic that means the same (role colour / colour of my role), else key."""
+    best, score = key, 0.0
+    kw = set(key.split())
+    for (t,) in con.execute("SELECT topic FROM me"):
+        r = max(difflib.SequenceMatcher(None, t, key).ratio(), 1.0 if kw and kw == set(t.split()) else 0.0)
+        if r > score:
+            best, score = t, r
+    return best if score >= 0.85 else key
+
+
+def me_set(topic: str, value: str, asked_by: int | None = None) -> str:
+    """Save one of her own decisions. Returns 'saved' / 'same' / 'changed from <old>'."""
+    key, value = topic_key(topic), re.sub(r"\s+", " ", value).strip()[:MAX_VALUE]
+    if len(key) < 2 or not value:
+        return "too short"
+    now = int(time.time())
+
+    def go(con):
+        k = _same_topic(con, key)
+        row = con.execute("SELECT value FROM me WHERE topic=?", (k,)).fetchone()
+        if row and row[0].lower() == value.lower():
+            con.execute("UPDATE me SET updated=? WHERE topic=?", (now, k))
+            return "same"
+        if row:
+            con.execute("UPDATE me SET value=?, asked_by=?, updated=? WHERE topic=?", (value, asked_by, now, k))
+        else:
+            con.execute("INSERT INTO me(topic,value,asked_by,created,updated) VALUES(?,?,?,?,?)", (k, value, asked_by, now, now))
+            con.execute("DELETE FROM me WHERE topic NOT IN (SELECT topic FROM me ORDER BY updated DESC LIMIT ?)", (MAX_ME,))
+        con.execute("INSERT INTO me_history(topic,value,asked_by,ts) VALUES(?,?,?,?)", (k, value, asked_by, now))
+        return f"changed from {row[0]}" if row else "saved"
+    return _run(go)
+
+
+def me_del(topic: str) -> bool:
+    key = topic_key(topic)
+
+    def go(con):
+        k = _same_topic(con, key)
+        n = con.execute("DELETE FROM me WHERE topic=?", (k,)).rowcount
+        if n:
+            con.execute("INSERT INTO me_history(topic,value,asked_by,ts) VALUES(?,NULL,NULL,?)", (k, int(time.time())))
+        return bool(n)
+    return _run(go)
+
+
+def me_all() -> list[tuple[str, str, int]]:
+    return _run(lambda con: con.execute("SELECT topic, value, updated FROM me ORDER BY updated DESC").fetchall())
+
+
+def me_block(query: str, n: int = SHOW_ME) -> str:
+    rows = me_all()
+    if not rows:
+        return ""
+    q = _words(query)
+    rows.sort(key=lambda r: (_overlap(q, _words(r[0] + " " + r[1])), r[2]), reverse=True)
+    lines = [f"- {t}: {v}" for t, v, _ in rows[:n]]
+    return ("things you've already decided about yourself (stay consistent; change one only on purpose, with [[ME]]):\n"
+            + "\n".join(lines))
 
 
 def block(people: list[tuple[int, str, int]], query: str) -> str:
@@ -238,21 +343,37 @@ def _cli(argv):
     elif cmd == "add" and len(argv) >= 4:
         print(add(int(argv[1]), argv[2].lower(), " ".join(argv[3:])))
     elif cmd == "del" and len(argv) == 2:
-        n = _run(lambda con: con.execute("DELETE FROM notes WHERE id=?", (int(argv[1]),)).rowcount, write=True)
+        n = _run(lambda con: con.execute("DELETE FROM notes WHERE id=?", (int(argv[1]),)).rowcount)
         print("deleted" if n else "no such note")
     elif cmd == "wipe" and len(argv) == 2:
-        n = _run(lambda con: con.execute("DELETE FROM notes WHERE user_id=?", (int(argv[1]),)).rowcount, write=True)
+        n = _run(lambda con: con.execute("DELETE FROM notes WHERE user_id=?", (int(argv[1]),)).rowcount)
         print(f"deleted {n} notes")
+    elif cmd == "me":
+        rows = me_all()
+        for t, v, up in rows:
+            print(f"{t:<28} {time.strftime('%Y-%m-%d %H:%M', time.localtime(up))}  {v}")
+        if not rows:
+            print("(she hasn't decided anything about herself yet)")
+    elif cmd == "me-set" and "=" in " ".join(argv[1:]):
+        t, _, v = " ".join(argv[1:]).partition("=")
+        print(me_set(t, v))
+    elif cmd == "me-del" and len(argv) >= 2:
+        print("deleted" if me_del(" ".join(argv[1:])) else "no such topic")
+    elif cmd == "me-history":
+        k = topic_key(" ".join(argv[1:])) if len(argv) > 1 else None
+        for t, v, ts in _run(lambda con: con.execute("SELECT topic, value, ts FROM me_history ORDER BY id").fetchall()):
+            if not k or t == k:
+                print(f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(ts))}  {t:<28} {v if v is not None else '(deleted)'}")
     elif cmd == "export":
         sys.stdout.write(export_text())
     elif cmd == "import":
-        print(import_text(sys.stdin.read(1_000_001)))
+        try:
+            print(import_text(sys.stdin.read(1_000_001)))
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from None
     else:
         print(__doc__.split("CLI", 1)[1])
 
 
 if __name__ == "__main__":
-    try:
-        _cli(sys.argv[1:])
-    except (ValueError, OSError, sqlite3.Error) as exc:
-        sys.exit(str(exc))
+    _cli(sys.argv[1:])

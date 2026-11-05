@@ -9,7 +9,7 @@ so changing channel or owner never means editing code:
     CHANNEL_IDS         main channel(s), comma separated; the first one is where lato-say posts
     FRIEND_IDS          people she chats with normally when they ping/reply/say her name
 
-Used by gateway.py, lato-say and the diagnostic scripts (chancheck.py, perm.py).
+Used by the gateway and server helpers.
 Standalone on purpose: stdlib only, safe to import from anywhere in this folder or /opt/latochan.
 """
 import os
@@ -28,6 +28,8 @@ GUILD_ID = os.environ.get("GUILD_ID", "")
 MAIN_CHANNELS = id_list("CHANNEL_IDS")
 MAIN_CHANNEL = MAIN_CHANNELS[0] if MAIN_CHANNELS else ""
 FRIEND_IDS = id_list("FRIEND_IDS")
+
+STATE_TAG = "📋 LatoChan state"
 
 # env-file keys that are safe to copy into os.environ for scripts that parse /etc/latochan.env themselves
 KEYS = ("OWNER_ID", "BOT_ID", "GUILD_ID", "CHANNEL_IDS", "FRIEND_IDS")
